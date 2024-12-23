@@ -1,15 +1,29 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
 
-
 from src.ListaCircularDoble.ListaCircularDoble import ListaCircularDoble
-from src.ListaCircularDoble.Clientes import Cliente
-
-from src.ArbolB.Vehiculos import Vehiculo
 from src.ArbolB.ArbolB import ArbolB
+from src.Grafo.ListaAdyacencia import ListaAdyacencia
+
+from src.Clases.Clientes import Cliente
+from src.Clases.Vehiculos import Vehiculo
+from src.Clases.Vertices import Vertice
+
 
 lista_clientes = ListaCircularDoble()
 arbol_vehiculos = ArbolB()
+lista_adyacencia = ListaAdyacencia()
+
+def cargar_datos_prueba():
+    lista_clientes.agregar(Cliente("1234567890101", "Juan", "Pérez", "M", "12345678", "Ciudad de Guatemala"))
+    arbol_vehiculos.insertar(Vehiculo("P001", "Toyota", "Corolla", 0.5))
+    lista_adyacencia.insertar("A", "B")
+    lista_adyacencia.insertar("A", "C")
+    lista_adyacencia.insertar("C", "A")
+    lista_adyacencia.mostrar_grafo()
+    lista_adyacencia.graficar("grafo")
+    print(lista_adyacencia.eliminar_grafo())
+    lista_adyacencia.mostrar_grafo()
 
 def abrir_archivo():
     print("Abriendo el cuadro de diálogo para seleccionar un archivo...")
@@ -46,7 +60,7 @@ def menu():
         elif opcion == "2":
             gestionVehiculos()
         elif opcion == "3":
-            pass
+            cargar_datos_prueba()
         elif opcion == "4":
             break
         else:
@@ -181,4 +195,5 @@ def gestionClientes():
         print("Opción no válida. Intente de nuevo.")
 
 if __name__ == "__main__":
+    cargar_datos_prueba()
     menu()

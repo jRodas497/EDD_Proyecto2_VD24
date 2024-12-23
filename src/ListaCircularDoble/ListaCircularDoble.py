@@ -1,4 +1,4 @@
-from src.ListaCircularDoble.Clientes import Cliente
+from src.Clases.Clientes import Cliente
 
 class ListaCircularDoble:
     def __init__(self):

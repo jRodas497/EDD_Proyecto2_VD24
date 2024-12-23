@@ -1,12 +1,12 @@
 from src.ArbolB.NodoArbolB import NodoArbolB
-from src.ArbolB.Vehiculos import Vehiculo
+from src.Clases.Vehiculos import Vehiculo
 
 class ArbolB:    
-    def __init__(self, orden = 5):
+    def __init__(self, orden=5):
         self.ORDEN = orden
         self.raiz = NodoArbolB(self.ORDEN)
 
-    def insertar(self, vehiculo):
+    def insertar(self, vehiculo: Vehiculo):
         raiz = self.raiz
         if raiz.n == 2 * self.ORDEN - 1:
             nuevo_nodo = NodoArbolB(self.ORDEN)
@@ -36,7 +36,7 @@ class ArbolB:
         nodo_padre.llaves[indice] = nodo_lleno.llaves[self.ORDEN - 1]
         nodo_padre.n += 1
 
-    def insertar_no_lleno(self, nodo, vehiculo):
+    def insertar_no_lleno(self, nodo, vehiculo: Vehiculo):
         indice = nodo.n - 1
         if nodo.hoja:
             while indice >= 0 and vehiculo.placa < nodo.llaves[indice].placa:

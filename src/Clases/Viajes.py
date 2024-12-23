@@ -17,3 +17,15 @@ class Viaje:
     def calcular_costo(self):
         self.costo = self.ruta_tomada.tiempo * self.vehiculo.precio_por_segundo
         return self.costo
+
+    def mostrar_informacion(self):
+        print(f"Origen: {self.lugar_origen}")
+        print(f"Destino: {self.lugar_destino}")
+        print(f"Fecha: {self.fecha}")
+        print(f"Hora: {self.hora}")
+        print(f"Cliente: {self.cliente}")
+        print(f"Vehículo: {self.vehiculo}")
+        print(f"Ruta: {self.ruta_tomada}")
+        print(f"Destinos: {self.destinos}")
+        print(f"Tiempo: {self.tiempo}")
+        print(f"Costo: {self.costo}")
