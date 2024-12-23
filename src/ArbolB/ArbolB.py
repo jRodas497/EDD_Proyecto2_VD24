@@ -1,16 +1,15 @@
 from src.ArbolB.NodoArbolB import NodoArbolB
 from src.ArbolB.Vehiculos import Vehiculo
 
-class ArbolB:
-    ORDEN = 5
-    
-    def __init__(self):
-        self.raiz = NodoArbolB()
+class ArbolB:    
+    def __init__(self, orden = 5):
+        self.ORDEN = orden
+        self.raiz = NodoArbolB(self.ORDEN)
 
     def insertar(self, vehiculo):
         raiz = self.raiz
         if raiz.n == 2 * self.ORDEN - 1:
-            nuevo_nodo = NodoArbolB()
+            nuevo_nodo = NodoArbolB(self.ORDEN)
             self.raiz = nuevo_nodo
             nuevo_nodo.hoja = False
             nuevo_nodo.hijos[0] = raiz
@@ -20,7 +19,7 @@ class ArbolB:
             self.insertar_no_lleno(raiz, vehiculo)
 
     def dividir_hijo(self, nodo_padre, indice, nodo_lleno):
-        nuevo_nodo = NodoArbolB()
+        nuevo_nodo = NodoArbolB(self.ORDEN)
         nuevo_nodo.hoja = nodo_lleno.hoja
         nuevo_nodo.n = self.ORDEN - 1
         for k in range(self.ORDEN - 1):
@@ -72,6 +71,8 @@ class ArbolB:
             print(f"Error al cargar el archivo: {e}")
 
     def buscar(self, placa, nodo=None):
+        if placa is None:
+            return None
         if nodo is None:
             nodo = self.raiz
         indice = 0
@@ -111,7 +112,7 @@ class ArbolB:
                 if not self.raiz.hoja:
                     self.raiz = self.raiz.hijos[0]
                 else:
-                    self.raiz = NodoArbolB()
+                    self.raiz = NodoArbolB(self.ORDEN)
             print(f"Vehículo eliminado:")
             print(f"Placa: {vehiculo.placa}\n | Marca: {vehiculo.marca}\n  | Modelo: {vehiculo.modelo}\n   | Precio por segundo: {vehiculo.precio_por_segundo}")
             return vehiculo

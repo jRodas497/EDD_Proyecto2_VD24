@@ -2,11 +2,11 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 
 
-from EDD_Proyecto2_VD24.src.ListaCircularDoble.ListaCircularDoble import ListaCircularDoble
-from EDD_Proyecto2_VD24.src.ListaCircularDoble.Clientes import Cliente
+from src.ListaCircularDoble.ListaCircularDoble import ListaCircularDoble
+from src.ListaCircularDoble.Clientes import Cliente
 
-from EDD_Proyecto2_VD24.src.ArbolB.Vehiculos import Vehiculo
-from EDD_Proyecto2_VD24.src.ArbolB.ArbolB import ArbolB
+from src.ArbolB.Vehiculos import Vehiculo
+from src.ArbolB.ArbolB import ArbolB
 
 lista_clientes = ListaCircularDoble()
 arbol_vehiculos = ArbolB()
@@ -90,6 +90,7 @@ def gestionVehiculos():
             vehiculo_modificado = arbol_vehiculos.modificar(placa, {k: v for k, v in nuevos_datos.items() if v})
             if vehiculo_modificado:
                 print(f"Vehículo modificado.")
+                print()
         else:
             print(f"Vehículo con Placa {placa} no encontrado.")
          
@@ -102,6 +103,7 @@ def gestionVehiculos():
     elif opcion == "4":
         placa = input("Ingrese Placa del vehículo a mostrar: ")
         vehiculo = arbol_vehiculos.mostrar_informacion(placa)
+        print()
         if vehiculo:
             print(f"Vehiculo encontrado.")
             

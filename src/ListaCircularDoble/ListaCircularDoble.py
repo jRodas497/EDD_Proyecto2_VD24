@@ -1,4 +1,4 @@
-from EDD_Proyecto2_VD24.src.ListaCircularDoble.Clientes import Cliente
+from src.ListaCircularDoble.Clientes import Cliente
 
 class ListaCircularDoble:
     def __init__(self):
