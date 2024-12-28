@@ -42,18 +42,24 @@ class ListaAdyacencia:
         return "Grafo eliminado."
     
     def graficar(self, filename="grafo"):
-        dot = graphviz.Graph(comment='Grafo')
+        dot = graphviz.Graph(engine='neato', comment='Grafo')
+        
+        dot.attr(fontsize='5')
+        dot.attr('edge', len='3.0')
+        
         actual = self.vertices.inicio
+        visitados = set()
         while actual:
             vertice = actual.nombre
-            dot.node(vertice.nombre)
             adyacente_actual = vertice.adyacentes.inicio
             while adyacente_actual:
                 ruta = adyacente_actual.nombre
-                dot.edge(vertice.nombre, ruta.destino, label=f"{ruta.tiempo}")
+                if (vertice.nombre, ruta.destino) not in visitados and (ruta.destino, vertice.nombre) not in visitados:
+                    dot.edge(vertice.nombre, ruta.destino, label=f"{ruta.tiempo}")
+                    visitados.add((vertice.nombre, ruta.destino))
                 adyacente_actual = adyacente_actual.siguiente
             actual = actual.siguiente
-        
+
         output_dir = os.path.join(os.getcwd(), "Graphviz")
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)

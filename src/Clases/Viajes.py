@@ -1,12 +1,12 @@
 class Viaje:
-    def __init__(self, lugar_origen, lugar_destino, fecha, hora, cliente, vehiculo, ruta_tomada):
-        self.lugar_origen = lugar_origen
-        self.lugar_destino = lugar_destino
+    def __init__(self, origen, destino, fecha, hora, cliente, vehiculo, ruta_tomada):
+        self.origen = origen
+        self.destino = destino
         self.fecha = fecha
         self.hora = hora
         self.cliente = cliente
         self.vehiculo = vehiculo
-        self.ruta = ruta_tomada
+        self.ruta_tomada = ruta_tomada
         self.costo = 0
         self.destinos = 0
         self.tiempo = 0
@@ -19,8 +19,8 @@ class Viaje:
         return self.costo
 
     def mostrar_informacion(self):
-        print(f"Origen: {self.lugar_origen}")
-        print(f"Destino: {self.lugar_destino}")
+        print(f"Origen: {self.origen}")
+        print(f"Destino: {self.destino}")
         print(f"Fecha: {self.fecha}")
         print(f"Hora: {self.hora}")
         print(f"Cliente: {self.cliente}")

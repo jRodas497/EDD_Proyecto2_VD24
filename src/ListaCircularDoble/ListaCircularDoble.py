@@ -1,6 +1,10 @@
 from src.Clases.Clientes import Cliente
+import graphviz, os
 
 class ListaCircularDoble:
+    global counter
+    counter = 1
+    
     def __init__(self):
         self.primero = None
         self.ultimo = None
@@ -136,3 +140,33 @@ class ListaCircularDoble:
         except Exception as e:
             print(f"Error al cargar el archivo: {e}")
         
+    def graficar(self, filename="clientes_lista_circular_doble"):
+        dot = graphviz.Digraph(comment='clientes_lista_circular_doble')
+        
+        if self.primero is None:
+            print("La lista está vacía.")
+            return None
+        
+        actual = self.primero
+        while True:
+            dot.node(actual.dpi, f"{actual.nombres} {actual.apellidos}\nDPI: {actual.dpi}")
+            dot.edge(actual.dpi, actual.siguiente.dpi, constraint='true')
+            dot.edge(actual.dpi, actual.anterior.dpi, constraint='true', _attributes={'dir': 'back'})
+            actual = actual.siguiente
+            if actual == self.primero:
+                break
+            
+        output_dir = os.path.join(os.getcwd(), "Graphviz")
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            
+        base_filename = filename
+        
+        ruta_grafo = os.path.join(output_dir, f"{base_filename}")
+        while os.path.exists(ruta_grafo):
+            ruta_grafo = os.path.join(output_dir, f"{base_filename}({counter})")
+            counter += 1
+        
+        dot.render(ruta_grafo, format='png', cleanup=True)
+        print(f"Lista del reporte de Clientes guardada como {ruta_grafo}")
+        return ruta_grafo + ".png"
