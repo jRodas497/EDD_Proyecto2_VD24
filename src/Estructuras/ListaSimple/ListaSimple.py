@@ -1,11 +1,11 @@
-from src.ListaSimple.Nodo import Nodo
+from src.Estructuras.ListaSimple.Nodo import NodoLS
 
 class ListaSimple:
     def __init__(self):
         self.inicio = None
 
     def insertar(self, nombre):
-        nuevo_nodo = Nodo(nombre)
+        nuevo_nodo = NodoLS(nombre)
         if self.inicio is None:
             self.inicio = nuevo_nodo
         else:

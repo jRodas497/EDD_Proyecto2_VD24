@@ -1,11 +1,11 @@
 import tkinter as tk
-import os, datetime
+import os, datetime, random
 from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 
-from src.ListaCircularDoble.ListaCircularDoble import ListaCircularDoble
-from src.ArbolB.ArbolB import ArbolB
-from src.Grafo.ListaAdyacencia import ListaAdyacencia
+from src.Estructuras.ListaCircularDoble.ListaCircularDoble import ListaCircularDoble
+from src.Estructuras.ArbolB.ArbolB import ArbolB
+from src.Estructuras.Grafo.ListaAdyacencia import ListaAdyacencia
 
 from src.Clases.Clientes import Cliente
 from src.Clases.Vehiculos import Vehiculo
@@ -43,6 +43,21 @@ def limpiar_campos():
     entry_marca.delete(0, tk.END)
     entry_modelo.delete(0, tk.END)
     entry_precio_por_segundo.delete(0, tk.END)
+
+def mostrar_ruta_corta():
+    inicio = "Cadiz"
+    final = "Madrid"
+    ruta = lista_adyacencia.obtener_rutas_desde(inicio, final)
+    print(ruta)
+    if ruta:
+        resultado = []
+        actual = ruta.inicio
+        while actual is not None:
+            resultado.append(actual.nombre.nombre)
+            actual = actual.siguiente
+        print(f"Ruta más corta desde {inicio} hasta {final}: {resultado}")
+    else:
+        print(f"No se encontró una ruta desde {inicio} hasta {final}")
 
 #########################################################################################################################
 # Funciones para interfaz grafo
@@ -307,13 +322,23 @@ def imprimir_estructura_vehiculos():
 
 #########################################################################################################################
 # Funciones para interfaz vehículos
+
+def obtener_mes_dia_aleatorio():
+    mes = random.randint(1, 12)
+    dia = random.randint(1, 28)
+    return mes, dia
+
+def obtener_hora_aleatoria():
+    hora = random.randint(0, 23)
+    minuto = random.randint(0, 59)
+    segundo = random.randint(0, 59)
+    return f"{hora:02}:{minuto:02}:{segundo:02}"
+
 def llenar_tablas_viajes():
-    # Limpiar las tablas
     for tabla in [tabla_lugares_origen_viajes, tabla_lugares_destino_viajes, tabla_clientes_viajes, tabla_vehiculos_viajes]:
         for row in tabla.get_children():
             tabla.delete(row)
     
-    # Llenar tabla de lugares de origen y destino
     lugares = lista_adyacencia.obtener_todos_lugares()
     for index, lugar in enumerate(lugares):
         if index % 2 == 0:
@@ -323,7 +348,6 @@ def llenar_tablas_viajes():
             tabla_lugares_origen_viajes.insert("", "end", values=(lugar,), tags=('oddrow',))
             tabla_lugares_destino_viajes.insert("", "end", values=(lugar,), tags=('oddrow',))
     
-    # Llenar tabla de clientes
     clientes = lista_clientes.mostrar()
     for index, cliente in enumerate(clientes):
         if index % 2 == 0:
@@ -331,7 +355,6 @@ def llenar_tablas_viajes():
         else:
             tabla_clientes_viajes.insert("", "end", values=(cliente.dpi, cliente.nombres, cliente.apellidos), tags=('oddrow',))    
 
-    # Llenar tabla de vehículos        
     vehiculos = arbol_vehiculos.obtener_todos_vehiculos()
     for index, vehiculo in enumerate(vehiculos):
         if index % 2 == 0:
@@ -339,28 +362,19 @@ def llenar_tablas_viajes():
         else:
             tabla_vehiculos_viajes.insert("", "end", values=(vehiculo.placa, vehiculo.marca, vehiculo.precio_por_segundo), tags=('oddrow',))
 
-def obtener_datos_seleccionados():
-    origen = None
-    destino = None
-    cliente = None
-    vehiculo = None
-    
-    # Obtener lugar de origen
+def obtener_datos_seleccionados():    
     selected_items = tabla_lugares_origen_viajes.selection()
     if selected_items:
         origen = tabla_lugares_origen_viajes.item(selected_items[0], 'values')[0]
 
-    # Obtener lugar de destino
     selected_items = tabla_lugares_destino_viajes.selection()
     if selected_items:
         destino = tabla_lugares_destino_viajes.item(selected_items[0], 'values')[0]
 
-    # Obtener cliente
     selected_items = tabla_clientes_viajes.selection()
     if selected_items:
         cliente = tabla_clientes_viajes.item(selected_items[0], 'values')
 
-    # Obtener vehiculo
     selected_items = tabla_vehiculos_viajes.selection()
     if selected_items:
         vehiculo = tabla_vehiculos_viajes.item(selected_items[0], 'values')
@@ -377,24 +391,12 @@ def agregar_viaje():
     dpi_cliente = cliente[0]
     placa_vehiculo = vehiculo[0]
 
-    # Verificar que el cliente y el vehículo existan
-    cliente_obj = lista_clientes.obtener_cliente(dpi_cliente)
-    vehiculo_obj = arbol_vehiculos.buscar(placa_vehiculo)
-
-    if not cliente_obj or not vehiculo_obj:
-        messagebox.showerror("Error", "El cliente o el vehículo no existen.")
-        return
-
-    # Crear el objeto Viaje
-    fecha_hora_actual = datetime.now()
-    fecha = fecha_hora_actual.strftime("%Y-%m-%d")
-    hora = fecha_hora_actual.strftime("%H:%M:%S")
-    viaje = Viaje(origen, destino, fecha, hora, cliente_obj, vehiculo_obj, [origen, destino])
-    viaje.tiempo = 0  # Asigna el tiempo adecuado según tu lógica
-    viaje.calcular_costo()
-
+    mes, dia = obtener_mes_dia_aleatorio()
+    hora = obtener_hora_aleatoria()
+    fecha = f"{dia:02}/{mes:02}/2024"
+    viaje = Viaje(origen, destino, fecha, hora, dpi_cliente, placa_vehiculo)
     messagebox.showinfo("Éxito", "Viaje registrado exitosamente.")
-    viaje.mostrar_informacion()
+    mostrar_ruta_corta()
 
 def seleccionar_fila_lugares_origen(event):
     selected_items = tabla_lugares_origen_viajes.selection()
@@ -437,198 +439,6 @@ def seleccionar_fila_vehiculos(event):
         entry_placa_viajes.config(state='readonly')
 
 #########################################################################################################################
-
-def menu():
-    while True:
-        print("Menú de Gestión")
-        print("1. Clientes")
-        print("2. Vehiculos")
-        print("3. Rutas")
-        print("4. Salir")
-        opcion = input("Seleccione una opción: ")
-        print()
-
-        if opcion == "1":
-            gestionClientes()
-        elif opcion == "2":
-            gestionVehiculos()
-        elif opcion == "3":
-            gestionRutas()
-            
-        elif opcion == "4":
-            break
-        else:
-            print("Opción no válida. Intente de nuevo.")
-
-def gestionRutas():
-    print("Gestión de Rutas")
-    print("1. Agregar Ruta")
-    print("2. Modificar Ruta")
-    print("3. Eliminar Grafo de Rutas")
-    print("4. Imprimir Rutas")
-    print("5. Carga Masiva .txt")
-    opcion = input("Seleccione una opción: ")
-    print()
-    
-    if opcion == "1":
-        origen = input("Ingrese Origen: ")
-        destino = input("Ingrese Destino: ")
-        tiempo = int(input("Ingrese Tiempo: "))
-        lista_adyacencia.insertar(origen, destino, tiempo)
-        print()
-        
-    elif opcion == "2":
-        pass
-            
-    elif opcion == "3":
-        print("Seguro de eliminar el Grafo? (S/N)")
-        confirmacion = input("Seleccione una opción: ")
-        if confirmacion.lower() == "s":
-            lista_adyacencia.eliminar_grafo()
-            print("Grafo eliminado.")
-        else:
-            print("Operación cancelada.")
-        
-    elif opcion == "4":
-        lista_adyacencia.mostrar_grafo()
-        
-    elif opcion == "5":
-        """lista_adyacencia.eliminar_grafo()
-        contenido, ruta = abrir_archivo()
-        if contenido:
-            lista_adyacencia.cargar_rutas_desde_contenido(contenido)
-        else:
-            print("No se seleccionó ningún archivo.")"""
-    else:
-        print("Opción no válida. Intente de nuevo.")
-
-def gestionVehiculos():
-    print("Gestión de Vehiculos")
-    print("1. Agregar Vehiculo")
-    print("2. Modificar Vehiculo")
-    print("3. Eliminar Vehiculo")
-    print("4. Imprimir un Unico Vehiculo")
-    print("5. Imprimir Vehiculos")
-    print("6. Carga Masiva .txt")
-    opcion = input("Seleccione una opción: ")
-    print()
-    
-    if opcion == "1":
-        placa = input("Ingrese Placa: ")
-        
-        if arbol_vehiculos.buscar(placa):
-            print("El número de Placa ya existe.")
-            return
-        
-        marca = input("Ingrese Marca: ")
-        modelo = input("Ingrese Modelo: ")
-        precio_por_segundo = float(input("Ingrese Precio por Segundo: "))
-        
-        vehiculo = Vehiculo(placa, marca, modelo, precio_por_segundo)
-        print()
-        arbol_vehiculos.insertar(vehiculo)
-        print(f"Vehículo {marca} {modelo} agregado.")
-          
-    elif opcion == "2":
-        placa = input("Ingrese Placa del vehículo a modificar: ")
-        
-        if arbol_vehiculos.buscar(placa):
-            nuevos_datos = {}
-            nuevos_datos['marca'] = input("Ingrese nueva Marca (deje en blanco para no modificar): ")
-            nuevos_datos['modelo'] = input("Ingrese nuevo Modelo (deje en blanco para no modificar): ")
-            nuevos_datos['precio_por_segundo'] = input("Ingrese nuevo Precio por Segundo (deje en blanco para no modificar): ")
-            vehiculo_modificado = arbol_vehiculos.modificar(placa, {k: v for k, v in nuevos_datos.items() if v})
-            if vehiculo_modificado:
-                print(f"Vehículo modificado.")
-                print()
-        else:
-            print(f"Vehículo con Placa {placa} no encontrado.")
-         
-    elif opcion == "3":
-        placa = input("Ingrese Placa del vehículo a eliminar: ")
-        vehiculo_eliminado = arbol_vehiculos.eliminar(placa)
-        if vehiculo_eliminado:
-            print(f"Vehículo eliminado.")
-            
-    elif opcion == "4":
-        placa = input("Ingrese Placa del vehículo a mostrar: ")
-        vehiculo = arbol_vehiculos.mostrar_informacion(placa)
-        print()
-        if vehiculo:
-            print(f"Vehiculo encontrado.")
-            
-    elif opcion == "5":
-        lista_vehiculos = arbol_vehiculos.obtener_todos_vehiculos()
-        for vehiculo in lista_vehiculos:
-            print(f"Placa: {vehiculo.placa}\n | Marca: {vehiculo.marca}\n  | Modelo: {vehiculo.modelo}\n   | Precio por segundo: {vehiculo.precio_por_segundo}\n")
-       
-    if opcion == "6":
-        """contenido, ruta = abrir_archivo()
-        if contenido:
-            arbol_vehiculos.cargar_masiva(contenido)
-        else:
-            print("No se seleccionó ningún archivo.")"""
-    else:
-        print("Opción no válida. Intente de nuevo.")
-
-def gestionClientes():
-    print("Gestión de Cliente")
-    print("1. Agregar Cliente")
-    print("2. Modificar Cliente")
-    print("3. Eliminar Cliente")
-    print("4. Imprimir un Unico Cliente")
-    print("5. Imprimir Clientes")
-    print("6. Carga Masiva .txt")
-    opcion = input("Seleccione una opción: ")
-    print()
-    
-    if opcion == "1":
-        dpi = input("Ingrese DPI: ")
-        
-        if (lista_clientes.existe_dpi(dpi)):
-            print("El número de DPI ya existe.")
-            return
-        
-        nombres = input("Ingrese Nombres: ")
-        apellidos = input("Ingrese Apellidos: ")
-        genero = input("Ingrese Género: ")
-        telefono = input("Ingrese Teléfono: ")
-        direccion = input("Ingrese Dirección: ")
-        cliente = Cliente(dpi, nombres, apellidos, genero, telefono, direccion)
-        print()
-        lista_clientes.agregar(cliente)
-        print(f"Cliente {nombres} agregado.")
-        
-    elif opcion == "2":
-        dpi = input("Ingrese DPI del cliente a modificar: ")
-        
-        if lista_clientes.existe_dpi(dpi):
-            nuevos_datos = {}
-            nuevos_datos['nombres'] = input("Ingrese nuevos Nombres (deje en blanco para no modificar): ")
-            nuevos_datos['apellidos'] = input("Ingrese nuevos Apellidos (deje en blanco para no modificar): ")
-            nuevos_datos['genero'] = input("Ingrese nuevo Género (deje en blanco para no modificar): ")
-            nuevos_datos['telefono'] = input("Ingrese nuevo Teléfono (deje en blanco para no modificar): ")
-            nuevos_datos['direccion'] = input("Ingrese nueva Dirección (deje en blanco para no modificar): ")
-            lista_clientes.modificar(dpi, {k: v for k, v in nuevos_datos.items() if v})
-        else:
-            print(f"Cliente con DPI {dpi} no encontrado.")
-            
-    elif opcion == "3":
-        dpi = input("Ingrese DPI del cliente a eliminar: ")
-        lista_clientes.eliminar(dpi)
-    elif opcion == "4":
-        dpi = input("Ingrese DPI del cliente a mostrar: ")
-        lista_clientes.mostrar_informacion(dpi)
-    elif opcion == "5":
-        lista_clientes.mostrar()
-    elif opcion == "6":
-        """contenido, ruta = abrir_archivo()
-        if contenido:
-            lista_clientes.carga_masiva(contenido)
-        else:
-            print("No se seleccionó ningún archivo.")"""
-    else:
-        print("Opción no válida. Intente de nuevo.")
 
 """if __name__ == "__main__":
     cargar_datos_prueba()
@@ -906,21 +716,21 @@ tabla_vehiculos_viajes.tag_configure('oddrow', background='white')
 tabla_vehiculos_viajes.tag_configure('evenrow', background='#D4EBF8')
 
 # Campos de entrada
-tk.Label(frame_viajes, text="Lugar de Origen:", bg="white").grid(row=2, column=0, sticky=tk.W, pady=5)
+tk.Label(frame_viajes, text="Lugar de Origen:", bg="white").grid(row=0, column=0, sticky=tk.W, pady=5)
 entry_origen_viajes = tk.Entry(frame_viajes, width=50)
-entry_origen_viajes.grid(row=2, column=1, pady=5)
+entry_origen_viajes.grid(row=0, column=1, pady=5)
 
-tk.Label(frame_viajes, text="Lugar de Destino:", bg="white").grid(row=3, column=0, sticky=tk.W, pady=5)
+tk.Label(frame_viajes, text="Lugar de Destino:", bg="white").grid(row=1, column=0, sticky=tk.W, pady=5)
 entry_destino_viajes = tk.Entry(frame_viajes, width=50)
-entry_destino_viajes.grid(row=3, column=1, pady=5)
+entry_destino_viajes.grid(row=1, column=1, pady=5)
 
-tk.Label(frame_viajes, text="DPI del Cliente:", bg="white").grid(row=0, column=0, sticky=tk.W, pady=5)
+tk.Label(frame_viajes, text="DPI del Cliente:", bg="white").grid(row=2, column=0, sticky=tk.W, pady=5)
 entry_dpi_viajes = tk.Entry(frame_viajes, width=50)
-entry_dpi_viajes.grid(row=0, column=1, pady=5)
+entry_dpi_viajes.grid(row=2, column=1, pady=5)
 
-tk.Label(frame_viajes, text="Placa del Vehículo:", bg="white").grid(row=1, column=0, sticky=tk.W, pady=5)
+tk.Label(frame_viajes, text="Placa del Vehículo:", bg="white").grid(row=3, column=0, sticky=tk.W, pady=5)
 entry_placa_viajes = tk.Entry(frame_viajes, width=50)
-entry_placa_viajes.grid(row=1, column=1, pady=5)
+entry_placa_viajes.grid(row=3, column=1, pady=5)
 
 # Botón para encontrar la ruta más corta y registrar el viaje
 btn_agregar_viaje = tk.Button(frame_viajes, text="Agregar Viaje", command=agregar_viaje, bg="#FFF2C2", fg="black")

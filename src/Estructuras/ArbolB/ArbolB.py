@@ -1,4 +1,4 @@
-from src.ArbolB.NodoArbolB import NodoArbolB
+from src.Estructuras.ArbolB.NodoArbolB import NodoArbolB
 from src.Clases.Vehiculos import Vehiculo
 import graphviz, os
 

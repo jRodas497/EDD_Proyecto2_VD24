@@ -1,8 +1,10 @@
-from src.ListaSimple.ListaSimple import ListaSimple
+from src.Estructuras.ListaSimple.ListaSimple import ListaSimple
 from src.Clases.Vertices import Vertice
 from src.Clases.Rutas import Ruta
-from src.ListaSimple.Nodo import Nodo
+from src.Estructuras.Cola.Cola import Cola
+from src.Estructuras.Cola.Nodo import Nodo
 import graphviz, os
+from copy import copy
 
 class ListaAdyacencia:
     def __init__(self):
@@ -20,6 +22,14 @@ class ListaAdyacencia:
             resultado.nombre.adyacentes.insertar(Ruta(origen, destino, tiempo))
             return f"Adyacente {destino} agregado al vértice {origen} ({tiempo} min)."
 
+    def buscar(self, origen):
+        aux = self.vertices.inicio
+        while aux is not None:
+            if aux.nombre.nombre == origen:
+                return aux.nombre
+            aux = aux.siguiente
+        return None
+    
     def mostrar_grafo(self):
         actual = self.vertices.inicio
         grafo_str = ""
@@ -106,3 +116,60 @@ class ListaAdyacencia:
                 adyacente_actual = adyacente_actual.siguiente
             actual = actual.siguiente
         return lugares
+    
+    def obtener_rutas_desde(self, origen, destino) -> ListaSimple:
+        ruta: ListaSimple[Vertice] = ListaSimple()
+        nodos_visitados: Cola = Cola()
+        nodos: Cola = Cola()
+        
+        original: Vertice = copy(self.buscar(origen))
+        
+        if original is None:
+            print(f"No se encontró el lugar de origen: {origen}")
+            return
+        
+        nodos.encolar(original)
+        
+        resultado: Vertice = self.get_ruta_corta(destino, nodos_visitados, nodos)
+        while resultado is not None:
+            ruta.insertar(resultado)
+            resultado = resultado.padre
+
+        return ruta
+
+    def get_ruta_corta(self, destino, nodos_visitados: Cola, nodos: Cola) -> Vertice:
+        if nodos.vacio():
+            return None
+        
+        original: Vertice = nodos.desencolar().nombre
+        
+        if original.nombre == destino:
+            nodos_visitados.encolar(original)
+            return original
+        
+        aux: Nodo[Vertice] = original.adyacentes.inicio
+        
+        while aux is not None:
+            if not self.es_visitado(nodos_visitados, aux.nombre.destino):
+                tiempo: int = aux.nombre.tiempo  # Cambia 'peso' por 'tiempo'
+                
+                adyacente: Vertice = copy(self.buscar(aux.nombre.destino))
+                adyacente.tiempo = tiempo  # Cambia 'peso' por 'tiempo'
+                adyacente.set_peso_acumulado(original.peso_acumulado + tiempo)  # Cambia 'peso' por 'tiempo'
+                adyacente.padre = original
+                
+                nodos.encolar(adyacente)
+                
+            aux = aux.siguiente
+            
+        nodos.ordenar()
+        nodos_visitados.encolar(original)
+        return self.get_ruta_corta(destino, nodos_visitados, nodos)
+
+    def es_visitado(self, nodos_visitados: Cola, destino: str) -> bool:
+        actual = nodos_visitados.inicio
+        while actual is not None:
+            if actual.nombre.nombre == destino:
+                return True
+            actual = actual.siguiente
+        return False
