@@ -1,5 +1,5 @@
 import tkinter as tk
-import os
+import os, datetime
 from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 
@@ -9,7 +9,7 @@ from src.Grafo.ListaAdyacencia import ListaAdyacencia
 
 from src.Clases.Clientes import Cliente
 from src.Clases.Vehiculos import Vehiculo
-
+from src.Clases.Viajes import Viaje
 
 lista_clientes = ListaCircularDoble()
 arbol_vehiculos = ArbolB()
@@ -63,6 +63,7 @@ def cargar_rutas():
     
     lista_adyacencia.cargar_rutas_desde_contenido(contenido)
     messagebox.showinfo("Éxito", "Rutas cargadas exitosamente.")            
+    llenar_tablas_viajes()
 
 def eliminar_grafo():
     print("Eliminando el grafo...")
@@ -70,6 +71,7 @@ def eliminar_grafo():
     if confirmacion:
         print(lista_adyacencia.eliminar_grafo())
         generar_grafo()
+        llenar_tablas_viajes()
     else:
         print("Operación cancelada.")
 
@@ -86,7 +88,7 @@ def mostrar_imagen(event=None):
         window_width = root.winfo_width()
         window_height = root.winfo_height() - 100
         aspect_ratio = img.width / img.height
-        scale_factor = 0.45  # Factor de escala para reducir el tamaño de la imagen
+        scale_factor = 0.9  # Factor de escala para reducir el tamaño de la imagen
         new_width = int(window_width * scale_factor)
         new_height = int(window_height * scale_factor)
         if img.width > img.height:
@@ -168,6 +170,7 @@ def cargar_clientes():
     lista_clientes.carga_masiva(contenido)
     messagebox.showinfo("Éxito", "Clientes cargados exitosamente.") 
     actualizar_tabla_clientes()
+    llenar_tablas_viajes()
     limpiar_campos()
 
 def actualizar_tabla_clientes():
@@ -268,6 +271,7 @@ def cargar_vehiculos():
     arbol_vehiculos.cargar_masiva(contenido)
     messagebox.showinfo("Éxito", "Vehiculos cargados exitosamente.") 
     limpiar_campos()
+    llenar_tablas_viajes()
     actualizar_tabla_vehiculos()
     
 def actualizar_tabla_vehiculos():
@@ -296,6 +300,141 @@ def seleccionar_fila_vehiculos(event):
         entry_modelo.insert(0, valores[2])
         entry_precio_por_segundo.delete(0, tk.END)
         entry_precio_por_segundo.insert(0, valores[3])
+
+def imprimir_estructura_vehiculos():
+    arbol_vehiculos.graficar("vehiculos_arbol_b")
+    messagebox.showinfo("Éxito", "Estructura del árbol B generada exitosamente.")
+
+#########################################################################################################################
+# Funciones para interfaz vehículos
+def llenar_tablas_viajes():
+    # Limpiar las tablas
+    for tabla in [tabla_lugares_origen_viajes, tabla_lugares_destino_viajes, tabla_clientes_viajes, tabla_vehiculos_viajes]:
+        for row in tabla.get_children():
+            tabla.delete(row)
+    
+    # Llenar tabla de lugares de origen y destino
+    lugares = lista_adyacencia.obtener_todos_lugares()
+    for index, lugar in enumerate(lugares):
+        if index % 2 == 0:
+            tabla_lugares_origen_viajes.insert("", "end", values=(lugar,), tags=('evenrow',))
+            tabla_lugares_destino_viajes.insert("", "end", values=(lugar,), tags=('evenrow',))
+        else:
+            tabla_lugares_origen_viajes.insert("", "end", values=(lugar,), tags=('oddrow',))
+            tabla_lugares_destino_viajes.insert("", "end", values=(lugar,), tags=('oddrow',))
+    
+    # Llenar tabla de clientes
+    clientes = lista_clientes.mostrar()
+    for index, cliente in enumerate(clientes):
+        if index % 2 == 0:
+            tabla_clientes_viajes.insert("", "end", values=(cliente.dpi, cliente.nombres, cliente.apellidos), tags=('evenrow',))
+        else:
+            tabla_clientes_viajes.insert("", "end", values=(cliente.dpi, cliente.nombres, cliente.apellidos), tags=('oddrow',))    
+
+    # Llenar tabla de vehículos        
+    vehiculos = arbol_vehiculos.obtener_todos_vehiculos()
+    for index, vehiculo in enumerate(vehiculos):
+        if index % 2 == 0:
+            tabla_vehiculos_viajes.insert("", "end", values=(vehiculo.placa, vehiculo.marca, vehiculo.precio_por_segundo), tags=('evenrow',))
+        else:
+            tabla_vehiculos_viajes.insert("", "end", values=(vehiculo.placa, vehiculo.marca, vehiculo.precio_por_segundo), tags=('oddrow',))
+
+def obtener_datos_seleccionados():
+    origen = None
+    destino = None
+    cliente = None
+    vehiculo = None
+    
+    # Obtener lugar de origen
+    selected_items = tabla_lugares_origen_viajes.selection()
+    if selected_items:
+        origen = tabla_lugares_origen_viajes.item(selected_items[0], 'values')[0]
+
+    # Obtener lugar de destino
+    selected_items = tabla_lugares_destino_viajes.selection()
+    if selected_items:
+        destino = tabla_lugares_destino_viajes.item(selected_items[0], 'values')[0]
+
+    # Obtener cliente
+    selected_items = tabla_clientes_viajes.selection()
+    if selected_items:
+        cliente = tabla_clientes_viajes.item(selected_items[0], 'values')
+
+    # Obtener vehiculo
+    selected_items = tabla_vehiculos_viajes.selection()
+    if selected_items:
+        vehiculo = tabla_vehiculos_viajes.item(selected_items[0], 'values')
+
+    return origen, destino, cliente, vehiculo
+
+def agregar_viaje():
+    origen, destino, cliente, vehiculo = obtener_datos_seleccionados()
+
+    if not origen or not destino or not cliente or not vehiculo:
+        messagebox.showerror("Error", "Debe seleccionar un lugar de origen, un lugar de destino, un cliente y un vehículo.")
+        return
+
+    dpi_cliente = cliente[0]
+    placa_vehiculo = vehiculo[0]
+
+    # Verificar que el cliente y el vehículo existan
+    cliente_obj = lista_clientes.obtener_cliente(dpi_cliente)
+    vehiculo_obj = arbol_vehiculos.buscar(placa_vehiculo)
+
+    if not cliente_obj or not vehiculo_obj:
+        messagebox.showerror("Error", "El cliente o el vehículo no existen.")
+        return
+
+    # Crear el objeto Viaje
+    fecha_hora_actual = datetime.now()
+    fecha = fecha_hora_actual.strftime("%Y-%m-%d")
+    hora = fecha_hora_actual.strftime("%H:%M:%S")
+    viaje = Viaje(origen, destino, fecha, hora, cliente_obj, vehiculo_obj, [origen, destino])
+    viaje.tiempo = 0  # Asigna el tiempo adecuado según tu lógica
+    viaje.calcular_costo()
+
+    messagebox.showinfo("Éxito", "Viaje registrado exitosamente.")
+    viaje.mostrar_informacion()
+
+def seleccionar_fila_lugares_origen(event):
+    selected_items = tabla_lugares_origen_viajes.selection()
+    if selected_items:
+        selected_item = selected_items[0]
+        valores = tabla_lugares_origen_viajes.item(selected_item, 'values')
+        entry_origen_viajes.config(state='normal')
+        entry_origen_viajes.delete(0, tk.END)
+        entry_origen_viajes.insert(0, valores[0])
+        entry_origen_viajes.config(state='readonly')
+
+def seleccionar_fila_lugares_destino(event):
+    selected_items = tabla_lugares_destino_viajes.selection()
+    if selected_items:
+        selected_item = selected_items[0]
+        valores = tabla_lugares_destino_viajes.item(selected_item, 'values')
+        entry_destino_viajes.config(state='normal')
+        entry_destino_viajes.delete(0, tk.END)
+        entry_destino_viajes.insert(0, valores[0])
+        entry_destino_viajes.config(state='readonly')
+
+def seleccionar_fila_clientes(event):
+    selected_items = tabla_clientes_viajes.selection()
+    if selected_items:
+        selected_item = selected_items[0]
+        valores = tabla_clientes_viajes.item(selected_item, 'values')
+        entry_dpi_viajes.config(state='normal')
+        entry_dpi_viajes.delete(0, tk.END)
+        entry_dpi_viajes.insert(0, valores[0])
+        entry_dpi_viajes.config(state='readonly')
+
+def seleccionar_fila_vehiculos(event):
+    selected_items = tabla_vehiculos_viajes.selection()
+    if selected_items:
+        selected_item = selected_items[0]
+        valores = tabla_vehiculos_viajes.item(selected_item, 'values')
+        entry_placa_viajes.config(state='normal')
+        entry_placa_viajes.delete(0, tk.END)
+        entry_placa_viajes.insert(0, valores[0])
+        entry_placa_viajes.config(state='readonly')
 
 #########################################################################################################################
 
@@ -653,7 +792,7 @@ frame_botones_vehiculos = tk.Frame(frame_botones_container_vehiculos, bg="white"
 frame_botones_vehiculos.pack(expand=True)
 
 # Añadir botones para las acciones de vehiculos
-btn_imprimit_estructura_vehiculos = tk.Button(frame_botones_vehiculos, text="Imprimir Estructura - Vehiculos", bg="#FFF2C2", fg="black")
+btn_imprimit_estructura_vehiculos = tk.Button(frame_botones_vehiculos, text="Imprimir Estructura - Vehiculos", command=imprimir_estructura_vehiculos, bg="#FFF2C2", fg="black")
 btn_imprimit_estructura_vehiculos.pack(side=tk.LEFT, padx=5)
 
 btn_carga_masiva = tk.Button(frame_botones_vehiculos, text="Carga Masiva - Vehiculos", command=cargar_vehiculos, bg="#FFF2C2", fg="black")
@@ -718,6 +857,76 @@ tabla_vehiculos.bind("<<TreeviewSelect>>", seleccionar_fila_vehiculos)
 
 #########################################################################################################################
 
+# Crear un frame contenedor para las tablas en la pestaña de viajes
+frame_tablas_viajes = tk.Frame(tab_viajes, bg="white")
+frame_tablas_viajes.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+# Crear un frame contenedor para los campos de entrada y los botones en la pestaña de viajes
+frame_viajes = tk.Frame(tab_viajes, bg="white")
+frame_viajes.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+# Crear las tablas
+tabla_lugares_origen_viajes = ttk.Treeview(frame_tablas_viajes, columns=("Lugar"), show='headings')
+tabla_lugares_origen_viajes.heading("Lugar", text="Lugar de Origen")
+tabla_lugares_origen_viajes.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=True)
+tabla_lugares_origen_viajes.column("Lugar", width=100)
+
+tabla_lugares_origen_viajes.tag_configure('oddrow', background='white')
+tabla_lugares_origen_viajes.tag_configure('evenrow', background='#D4EBF8')
+
+tabla_lugares_destino_viajes = ttk.Treeview(frame_tablas_viajes, columns=("Lugar"), show='headings')
+tabla_lugares_destino_viajes.heading("Lugar", text="Lugar de Destino")
+tabla_lugares_destino_viajes.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=True)
+tabla_lugares_destino_viajes.column("Lugar", width=100)
+
+tabla_lugares_destino_viajes.tag_configure('evenrow', background='white')
+tabla_lugares_destino_viajes.tag_configure('oddrow', background='#D4EBF8')
+
+tabla_clientes_viajes = ttk.Treeview(frame_tablas_viajes, columns=("DPI", "Nombres", "Apellidos"), show='headings')
+tabla_clientes_viajes.heading("DPI", text="DPI")
+tabla_clientes_viajes.heading("Nombres", text="Nombres")
+tabla_clientes_viajes.heading("Apellidos", text="Apellidos")
+tabla_clientes_viajes.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=True)
+tabla_clientes_viajes.column("DPI", width=100)
+tabla_clientes_viajes.column("Nombres", width=150)
+tabla_clientes_viajes.column("Apellidos", width=150)
+
+tabla_clientes_viajes.tag_configure('oddrow', background='white')
+tabla_clientes_viajes.tag_configure('evenrow', background='#D4EBF8')
+
+tabla_vehiculos_viajes = ttk.Treeview(frame_tablas_viajes, columns=("Placa", "Marca", "Precio por Segundo"), show='headings')
+tabla_vehiculos_viajes.heading("Placa", text="Placa")
+tabla_vehiculos_viajes.heading("Marca", text="Marca")
+tabla_vehiculos_viajes.heading("Precio por Segundo", text="Precio por Segundo")
+tabla_vehiculos_viajes.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=True)
+tabla_vehiculos_viajes.column("Placa", width=80)
+tabla_vehiculos_viajes.column("Marca", width=150)
+tabla_vehiculos_viajes.column("Precio por Segundo", width=120)
+tabla_vehiculos_viajes.tag_configure('oddrow', background='white')
+tabla_vehiculos_viajes.tag_configure('evenrow', background='#D4EBF8')
+
+# Campos de entrada
+tk.Label(frame_viajes, text="Lugar de Origen:", bg="white").grid(row=2, column=0, sticky=tk.W, pady=5)
+entry_origen_viajes = tk.Entry(frame_viajes, width=50)
+entry_origen_viajes.grid(row=2, column=1, pady=5)
+
+tk.Label(frame_viajes, text="Lugar de Destino:", bg="white").grid(row=3, column=0, sticky=tk.W, pady=5)
+entry_destino_viajes = tk.Entry(frame_viajes, width=50)
+entry_destino_viajes.grid(row=3, column=1, pady=5)
+
+tk.Label(frame_viajes, text="DPI del Cliente:", bg="white").grid(row=0, column=0, sticky=tk.W, pady=5)
+entry_dpi_viajes = tk.Entry(frame_viajes, width=50)
+entry_dpi_viajes.grid(row=0, column=1, pady=5)
+
+tk.Label(frame_viajes, text="Placa del Vehículo:", bg="white").grid(row=1, column=0, sticky=tk.W, pady=5)
+entry_placa_viajes = tk.Entry(frame_viajes, width=50)
+entry_placa_viajes.grid(row=1, column=1, pady=5)
+
+# Botón para encontrar la ruta más corta y registrar el viaje
+btn_agregar_viaje = tk.Button(frame_viajes, text="Agregar Viaje", command=agregar_viaje, bg="#FFF2C2", fg="black")
+btn_agregar_viaje.grid(row=4, columnspan=2, pady=10)
+
+#########################################################################################################################
 # Establecer el estilo para el fondo blanco de las pestañas
 style = ttk.Style()
 style.configure('TFrame', background='white')
@@ -728,10 +937,18 @@ panel.pack(expand=True, fill='both')
 
 # Vincular el evento de cambio de tamaño de la ventana a la función mostrar_imagen
 tab_grafo.bind("<Configure>", mostrar_imagen)
+tab_viajes.bind("<Configure>", llenar_tablas_viajes)
 
-cargar_datos_prueba()
+# Vincular el evento de selección de la tabla a la función seleccionar_fila
+tabla_lugares_origen_viajes.bind("<<TreeviewSelect>>", seleccionar_fila_lugares_origen)
+tabla_lugares_destino_viajes.bind("<<TreeviewSelect>>", seleccionar_fila_lugares_destino)
+tabla_clientes_viajes.bind("<<TreeviewSelect>>", seleccionar_fila_clientes)
+tabla_vehiculos_viajes.bind("<<TreeviewSelect>>", seleccionar_fila_vehiculos)
+
+#cargar_datos_prueba()
 actualizar_tabla_clientes()
 actualizar_tabla_vehiculos()
+llenar_tablas_viajes()
 
 # Iniciar el bucle principal de la aplicación
 root.mainloop()

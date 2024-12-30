@@ -1,7 +1,11 @@
 from src.ArbolB.NodoArbolB import NodoArbolB
 from src.Clases.Vehiculos import Vehiculo
+import graphviz, os
 
-class ArbolB:    
+class ArbolB:   
+    global counter
+    counter = 1
+     
     def __init__(self, orden=5):
         self.ORDEN = orden
         self.raiz = NodoArbolB(self.ORDEN)
@@ -243,3 +247,43 @@ class ArbolB:
             print(f"Placa: {vehiculo.placa}\n | Marca: {vehiculo.marca}\n  | Modelo: {vehiculo.modelo}\n   | Precio por segundo: {vehiculo.precio_por_segundo}")
         else:
             print(f"Vehículo con placa {placa} no encontrado.")
+            
+    def graficar(self, filename="arbol_b"):
+        dot = graphviz.Digraph(comment='Árbol B')
+        
+        if self.raiz is None:
+            print("El árbol está vacío.")
+            return None
+        
+        def agregar_nodo(dot, nodo, padre_id=None):
+            if nodo is None:
+                return
+            
+            nodo_id = id(nodo)
+            label = "|".join([f"<f{i}> {str(llave.placa)}" for i, llave in enumerate(nodo.llaves) if llave is not None])
+            dot.node(str(nodo_id), f"{{ {label} }}", shape='record')
+            
+            if padre_id is not None:
+                dot.edge(f"{padre_id}:f{nodo.padre_index}", f"{nodo_id}:f0")
+            
+            for i, hijo in enumerate(nodo.hijos):
+                if hijo is not None:
+                    hijo.padre_index = i
+                    agregar_nodo(dot, hijo, nodo_id)
+        
+        agregar_nodo(dot, self.raiz)    
+    
+        output_dir = os.path.join(os.getcwd(), "Graphviz")
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            
+        base_filename = filename
+        
+        ruta_grafo = os.path.join(output_dir, f"{base_filename}")
+        while os.path.exists(ruta_grafo):
+            ruta_grafo = os.path.join(output_dir, f"{base_filename}({counter})")
+            counter += 1
+        
+        dot.render(ruta_grafo, format='png', cleanup=True)
+        print(f"Árbol B guardado como {ruta_grafo}")
+        return ruta_grafo + ".png"

@@ -76,10 +76,33 @@ class ListaAdyacencia:
         return ruta_grafo + ".png"
         
     def cargar_rutas_desde_contenido(self, contenido):
-        for line in contenido.splitlines():
-            line = line.strip().rstrip('%').strip()
-            origen, destino, tiempo = line.split(' / ')
-            tiempo = int(tiempo.split(' ')[0])
-            self.insertar(origen, destino, tiempo)
-        print("Rutas cargadas exitosamente desde el contenido.")
-        print()
+        contenido = contenido.strip()
+        
+        lineas = contenido.split('\n')
+        for linea in lineas:
+            linea = linea.strip()
+            
+            if linea.endswith('%'):
+                linea = linea[:-1]
+                
+                campos = linea.split('/')
+                
+                if len(campos) == 3:
+                    origen, destino, distancia = campos
+                    self.insertar(origen, destino, float(distancia))
+                else:
+                    print(f"Línea inválida: {linea}")
+    
+    def obtener_todos_lugares(self):
+        lugares = []
+        actual = self.vertices.inicio
+        while actual:
+            adyacente_actual = actual.nombre.adyacentes.inicio
+            while adyacente_actual:
+                ruta = adyacente_actual.nombre
+                if ruta.destino not in lugares:
+                    lugares.append(ruta.destino)
+                    print(ruta.destino) 
+                adyacente_actual = adyacente_actual.siguiente
+            actual = actual.siguiente
+        return lugares
